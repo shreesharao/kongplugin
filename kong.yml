@@ -1,0 +1,29 @@
+ _format_version: "1.1"
+ _transform: true
+
+ services:
+ - name: express-service
+   url: http://express-service:3000
+   protocol: http
+   routes:
+   - name: hello
+     paths:
+     - /api/hello
+     - /api/systemconfig
+ plugins:
+  - name: rate-limiting
+    service: express-service
+    config:
+      minute: 10
+      policy: local
+  - name: license-manager
+    service: express-service
+    config:
+      license_id: "1000"
+      lmagent_service: "http://lm-service:5000"
+      license_endpoint: "/acquire"
+      status_cache_ttl_seconds: 60
+      systemconfig_uri_path: "google.com"
+      logout_uri_path: "google.com"
+      admin_allowed_urls: "/api/systemconfig"
+

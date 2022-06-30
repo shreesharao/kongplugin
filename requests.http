@@ -1,0 +1,15 @@
+###
+GET http://localhost:8001/services
+Accept: "application/json"
+###
+GET http://localhost:8000/api/hello/
+Accept: "application/json"
+
+###
+
+GET http://localhost:8000/api/systemconfig/sysconfig
+Accept: "application/json"
+
+###
+POST http://localhost:5000/acquire
+Accept: "application/json"
