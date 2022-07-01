@@ -39,16 +39,30 @@ function M.get_lm_config(config)
         lmagent_service = config.lmagent_service,
         license_endpoint = config.license_endpoint,
         status_cache_ttl_seconds = config.status_cache_ttl_seconds,
-        systemconfig_uri_path = config.systemconfig_uri_path,
+        redirect_uri_path = config.redirect_uri_path,
         logout_uri_path = config.logout_uri_path,
-        admin_allowed_urls = parse_urls(config.admin_allowed_urls)
+        valid_license_modes = config.valid_license_modes,
+        redirected_roles_allowed_urls = config.redirected_roles_allowed_urls,
+        blocked_roles_allowed_urls = config.blocked_roles_allowed_urls,
+        allowed_roles = config.allowed_roles,
+        redirected_roles = config.redirected_roles
     }
 end
 
 -- Checks if the table has specified value or not
 function M.table_has_value(tab, val)
     for index, value in ipairs(tab) do
-        if string.lower(value) == val then
+        if string.lower(value) == string.lower(val) then
+            return true
+        end
+    end
+    return false
+end
+
+-- Checks if the role has a particular privilege
+function M.check_role_privilege(roles, privileges)
+    for index, role in ipairs(roles) do
+        if M.table_has_value(privileges, role) then
             return true
         end
     end

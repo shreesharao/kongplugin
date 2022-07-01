@@ -7,6 +7,16 @@ app.get('/sysconfig', (req, res) => {
   res.send('Hello World From system config!')
 })
 
+app.get('/redirect', (req, res) => {
+  console.log(`Got request on path ${req.url}, port ${req.socket.remotePort} from host ${req.hostname}`)
+  res.send('Hello World From redirect!')
+})
+
+app.get('/logout', (req, res) => {
+  console.log(`Got request on path ${req.url}, port ${req.socket.remotePort} from host ${req.hostname}`)
+  res.send('Hello World From logout!')
+})
+
 app.get('*', (req, res) => {
   console.log(`Got request on path ${req.url}, port ${req.socket.remotePort} from host ${req.hostname}`)
   res.send('Hello World!')

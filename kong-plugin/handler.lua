@@ -28,11 +28,21 @@ end
 -- runs in the 'access_by_lua_block'
 function plugin:access(plugin_conf)
 
-    -- for testing
+    -- for testing - service role
+    -- ngx.req.set_header("X-Userinfo",
+    --    "eyJ1cG4iOiJzZXJ2aWNlIiwiaWQiOiIyODQ0MWRhMC0wYWZhLTRmMzUtYTYxMC00ZjZkMDNmNTc1NmMiLCJyb2xlIjpbIkNMSU5JQ0FMIiwib2ZmbGluZV9hY2Nlc3MiLCJ1bWFfYXV0aG9yaXphdGlvbiJdLCJuYW1lIjoic2VydmljZSBzZXJ2aWNlIiwidXNlcm5hbWUiOiJzZXJ2aWNlIiwiZW1haWwiOiJzZXJ2aWNlQHVzZXIudGVzdCIsImdyb3VwcyI6WyJTZXJ2aWNlIl0sInN1YiI6IjI4NDQxZGEwLTBhZmEtNGYzNS1hNjEwLTRmNmQwM2Y1NzU2YyIsImVtYWlsX3ZlcmlmaWVkIjpmYWxzZSwiZ2l2ZW5fbmFtZSI6InNlcnZpY2UiLCJwcmVmZXJyZWRfdXNlcm5hbWUiOiJzZXJ2aWNlIiwiZmFtaWx5X25hbWUiOiJzZXJ2aWNlIn0=")
+    -- test block end
+
+    -- for testing - admin role
     ngx.req.set_header("X-Userinfo",
         "eyJ1cG4iOiJzZXJ2aWNlIiwiaWQiOiIyODQ0MWRhMC0wYWZhLTRmMzUtYTYxMC00ZjZkMDNmNTc1NmMiLCJyb2xlIjpbIkNMSU5JQ0FMIiwib2ZmbGluZV9hY2Nlc3MiLCJBRE1JTiIsInVtYV9hdXRob3JpemF0aW9uIl0sIm5hbWUiOiJzZXJ2aWNlIHNlcnZpY2UiLCJ1c2VybmFtZSI6InNlcnZpY2UiLCJlbWFpbCI6InNlcnZpY2VAdXNlci50ZXN0IiwiZ3JvdXBzIjpbIlNlcnZpY2UiXSwic3ViIjoiMjg0NDFkYTAtMGFmYS00ZjM1LWE2MTAtNGY2ZDAzZjU3NTZjIiwiZW1haWxfdmVyaWZpZWQiOmZhbHNlLCJnaXZlbl9uYW1lIjoic2VydmljZSIsInByZWZlcnJlZF91c2VybmFtZSI6InNlcnZpY2UiLCJmYW1pbHlfbmFtZSI6InNlcnZpY2UifQ==")
     -- test block end
-    
+
+    -- for testing - any other role
+    -- ngx.req.set_header("X-Userinfo",
+    --    "eyJ1cG4iOiJzZXJ2aWNlIiwiaWQiOiIyODQ0MWRhMC0wYWZhLTRmMzUtYTYxMC00ZjZkMDNmNTc1NmMiLCJyb2xlIjpbIkNMSU5JQ0FMIiwib2ZmbGluZV9hY2Nlc3MiLCJ1bWFfYXV0aG9yaXphdGlvbiJdLCJuYW1lIjoic2VydmljZSBzZXJ2aWNlIiwidXNlcm5hbWUiOiJzZXJ2aWNlIiwiZW1haWwiOiJzZXJ2aWNlQHVzZXIudGVzdCIsImdyb3VwcyI6WyJTZXJ2aWNlIl0sInN1YiI6IjI4NDQxZGEwLTBhZmEtNGYzNS1hNjEwLTRmNmQwM2Y1NzU2YyIsImVtYWlsX3ZlcmlmaWVkIjpmYWxzZSwiZ2l2ZW5fbmFtZSI6InNlcnZpY2UiLCJwcmVmZXJyZWRfdXNlcm5hbWUiOiJzZXJ2aWNlIiwiZmFtaWx5X25hbWUiOiJzZXJ2aWNlIn0=")
+    -- test block end
+
     kong.log.info("Executing license-manager plugin")
 
     kong.log.info("Getting user details from X-userinfo header")
@@ -62,26 +72,33 @@ function plugin:access(plugin_conf)
     end
 
     kong.log.info("License status mode - ", license_status.mode)
-    if license_status.mode == "Allowed" then
+    if utils.table_has_value(lm_config.valid_license_modes, license_status.mode) then
         kong.log.info("License is valid. Forwarding the requests")
         utils.inject_license_details(lm_config)
     else
         kong.log.info("License is invalid.")
 
-        if utils.table_has_value(user.role, 'service') then
-            kong.log.info("User has SERVICE role. Forwarding the requests")
+        if utils.check_role_privilege(user.role, lm_config.allowed_roles) then
+            kong.log.info("User role is found in allowed roles. Forwarding the requests")
             utils.inject_license_details(lm_config)
-        elseif utils.table_has_value(user.role, 'admin') then
-            if filters.should_allow_url(lm_config.admin_allowed_urls) then
-                kong.log.info("User has ADMIN role. Found the request url in allowed list. Forwarding the request")
+        elseif utils.check_role_privilege(user.role, lm_config.redirected_roles) then
+            if filters.should_allow_url(lm_config.redirected_roles_allowed_urls) then
+                kong.log.info(
+                    "User role is found in redirected roles. Found the request url in allowed list. Forwarding the request")
                 utils.inject_license_details(lm_config)
             else
-                kong.log.info("User has ADMIN role. Redirecting the user to " .. lm_config.systemconfig_uri_path)
-                ngx.redirect(lm_config.systemconfig_uri_path)
+                kong.log.info("User role is found in redirected roles. Redirecting the user to " ..
+                                  lm_config.redirect_uri_path)
+                ngx.redirect(lm_config.redirect_uri_path)
             end
         else
-            kong.log.info("User is not SERVICE OR ADMIN user. Redirecting the user to " .. lm_config.logout_uri_path)
-            ngx.redirect(lm_config.systemconfig_uri_path)
+            if filters.should_allow_url(lm_config.blocked_roles_allowed_urls) then
+                kong.log.info(
+                    "User role is found blocked. Found the request url in allowed list. Forwarding the request")
+            else
+                kong.log.info("User role is found blocked. Redirecting the user to " .. lm_config.logout_uri_path)
+                ngx.redirect(lm_config.logout_uri_path)
+            end
         end
     end
 

@@ -2,12 +2,12 @@
 GET http://localhost:8001/services
 Accept: "application/json"
 ###
-GET http://localhost:8000/api/hello/
+GET http://localhost:8000/api/express/hello/
 Accept: "application/json"
 
 ###
 
-GET http://localhost:8000/api/systemconfig/sysconfig
+GET http://localhost:8000/api/express/redirect
 Accept: "application/json"
 
 ###

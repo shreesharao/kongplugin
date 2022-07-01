@@ -8,8 +8,7 @@
    routes:
    - name: hello
      paths:
-     - /api/hello
-     - /api/systemconfig
+     - /api/express
  plugins:
   - name: rate-limiting
     service: express-service
@@ -21,9 +20,13 @@
     config:
       license_id: "1000"
       lmagent_service: "http://lm-service:5000"
-      license_endpoint: "/acquire"
+      license_endpoint: "api/license/acquire"
       status_cache_ttl_seconds: 60
-      systemconfig_uri_path: "google.com"
-      logout_uri_path: "google.com"
-      admin_allowed_urls: "/api/systemconfig"
+      redirect_uri_path: "http://localhost:8000/api/express/redirect"
+      logout_uri_path: "http://localhost:8000/api/express/logout"
+      valid_license_modes: ["Allowed"]
+      redirected_roles_allowed_urls: ["/api/express/redirect"]
+      blocked_roles_allowed_urls: ["/api/express/logout"]
+      allowed_roles: ['service']
+      redirected_roles: ['admin']
 
